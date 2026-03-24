@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model customers {
+  customer_id       Int       @id @default(autoincrement())
+  first_name        String    @db.VarChar(100)
+  last_name         String    @db.VarChar(100)
+  phone             String?   @db.VarChar(20)
+  email             String    @unique @db.VarChar(255)
+  address           String?
+  registration_date DateTime? @default(now()) @db.Timestamp(6)
+  rentals           rentals[]
+}
+
+model genres {
+  genre_id   Int      @id @default(autoincrement())
+  genre_name String   @unique @db.VarChar(100)
+  movies     movies[]
+}
+
+model inventory {
+  inventory_id Int       @id @default(autoincrement())
+  movie_id     Int
+  store_id     Int
+  condition    String?   @db.VarChar(50)
+  movies       movies    @relation(fields: [movie_id], references: [movie_id], onDelete: NoAction, onUpdate: NoAction)
+  rentals      rentals[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model movies {
+  movie_id     Int         @id @default(autoincrement())
+  title        String      @db.VarChar(255)
+  release_year Int?
+  director     String?     @db.VarChar(255)
+  duration     Int?
+  genre_id     Int
+  inventory    inventory[] 
+  reviews      Review[]
+  genres       genres      @relation(fields: [genre_id], references: [genre_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_movie_genre")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model payments {
+  payment_id   Int       @id @default(autoincrement())
+  rental_id    Int
+  payment_type String    @db.VarChar(50)
+  amount       Decimal   @db.Decimal(10, 2)
+  payment_date DateTime? @default(now()) @db.Timestamp(6)
+  rentals      rentals   @relation(fields: [rental_id], references: [rental_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model rentals {
+  rental_id       Int        @id @default(autoincrement())
+  customer_id     Int
+  inventory_id    Int
+  rental_date     DateTime   @db.Timestamp(6)
+  return_due_date DateTime   @db.Timestamp(6)
+  return_date     DateTime?  @db.Timestamp(6)
+  payments        payments[]
+  customers       customers  @relation(fields: [customer_id], references: [customer_id], onDelete: NoAction, onUpdate: NoAction)
+  inventory       inventory  @relation(fields: [inventory_id], references: [inventory_id], onDelete: NoAction, onUpdate: NoAction)
+}
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String?
+  movieId   Int
+  movie     movies   @relation(fields: [movieId], references: [movie_id])
+}
